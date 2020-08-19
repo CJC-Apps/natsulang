@@ -414,12 +414,12 @@ while True:
         if ch != "}" or isInQuote or stack > 1:
             program += ch
             if not isInQuote and (ch == "'" or ch == '"'):
-                isInQuote = True
+                isInQuote = ch
             elif isInQuote and not isTransformed and ch == '\\':
                 isTransformed = True
             elif isInQuote and isTransformed:
                 isTransformed = False
-            elif isInQuote and (ch == "'" or ch == '"'):
+            elif isInQuote and (ch == isInQuote):
                 isInQuote = False
             if ch == '}' and not isInQuote:
                 stack -= 1
