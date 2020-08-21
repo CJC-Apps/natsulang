@@ -1,5 +1,6 @@
 # Natsulang text processing language
 This is a small text processing language based on Python 3. It is now being used in a software called CJCMCG.
+![](NatsulangImage.jpg)
 
 ## Example
 Recently, a Chinese book called <平安经> is hot on the Internet. All sentences in this book is in the format of `**平安`. The most famous paragraph translated in English is like this:
