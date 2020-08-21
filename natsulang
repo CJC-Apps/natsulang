@@ -293,6 +293,8 @@ def parse_single(prog, begin, tg="") -> list:
                 mainprog += prog[cur]
                 cur += 1
                 is_quote, is_trans = True, False
+                if mainprog.endswith("'''") or mainprog.endswith('"""'):
+                    quote_type *= 3;
                 while cur < len(prog) and is_quote:
                     mainprog += prog[cur]
                     if not is_trans and prog[cur] == '\\':
@@ -300,6 +302,8 @@ def parse_single(prog, begin, tg="") -> list:
                     elif is_trans:
                         is_trans = False
                     elif is_quote and prog[cur] == quote_type:
+                        is_quote = False
+                    elif is_quote and mainprog[len(mainprog) - 3:] == quote_type:
                         is_quote = False
                     cur += 1
                 cur -= 1
@@ -363,6 +367,8 @@ def parse_program(prog, begin, tg="") -> list:
             throw_error("In program tag " + tag + " position " + str(cur) + ": ';' expected.\n")
         if cur < len(prog) and prog[cur] == ';':
             cur += 1
+            while cur < len(prog) and (prog[cur] == ' ' or prog[cur] == '\n' or prog[cur] == '\t'):
+                cur += 1
             if cur == len(prog) or prog[cur] == ')':
                 preprog.append("None\n")
         while cur < len(prog) and (prog[cur] == ' ' or prog[cur] == '\n' or prog[cur] == '\t'):
@@ -432,6 +438,7 @@ while True:
             if answer[2] != skip_tag and skip_tag != "":
                 continue
             exec(''.join(answer[0]))
+            print(answer[1])
             result = eval(answer[1])
             if result is None:
                 result = ''
