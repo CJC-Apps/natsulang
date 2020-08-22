@@ -40,9 +40,9 @@ Can you find how this program works?
 ## Run Natsulang
 First, you need to download Python 3 and install. If you're using Windows, you need to add Python 3 to Path.
 
-For Unix-based operating systems, download the `natsulang` file and put it into Path directories like `/usr/local/bin`.
+Then, type `pip install natsulang` in the terminal, and wait for it complete.
 
-For Windows, download the `natsulang` file to your user directory, and use `python natsulang` in the terminal (if the current directory is your user directory).
+Finally, type `natsulang` in the terminal. If no error occurs, the installation is success.
 
 ## Learn
 You can learn Natsulang [here](https://github.com/CJC-Apps/natsulang/wiki).
