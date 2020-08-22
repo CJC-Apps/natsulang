@@ -28,7 +28,7 @@ bin = eval("bin");bytearray = eval("bytearray");
 callable = eval("callable");chr = eval("chr");
 compile = eval("compile");complex = eval("complex");
 divmod = eval("divmod");enumerate = eval("enumerate");
-file = eval("file");filter = eval("filter");
+filter = eval("filter");
 frozenset = eval("frozenset");hash = eval("hash");
 hex = eval("hex");id = eval("id");
 isinstance = eval("isinstance");iter = eval("iter");
@@ -43,18 +43,9 @@ tuple = eval("tuple");type = eval("type");
 format = eval("format");True = eval("True");False = eval("False");
 """)
 
-Parser = argparse.ArgumentParser(prog="natsulang", description="Natsu Language version " + version + " by Natsu Kinmoe")
-Parser.add_argument("-s", "--stream", help="execute a program inputted in stream, [file] will be ignored", action='store_true', default=False)
-Parser.add_argument("file", help="The file that will be executed.", nargs="?", default="")
-Args = Parser.parse_args()
-if Args.file == "" and not Args.stream:
-    Parser.print_help()
-    exit()
-
-program = ""
-file = sys.stdin if Args.stream else open(Args.file, "r")
 global_var = {}
 values = []
+program = ""
 
 
 def parse_single(prog, begin, tg="") -> list:
@@ -393,27 +384,23 @@ def parse_program(prog, begin, tg="") -> list:
     return [preprog, mainprog, tag, cur]
 
 
+answer = parse_program("@default@;", 0)
+exec(''.join(answer[0]))
 left = False
 isInQuote, isTransformed = False, False
 stack = 0
 skip_tag = ""
-answer = parse_program("@default@;", 0)
-exec(''.join(answer[0]))
 
-while True:
-    ch = file.read(1)
-    if len(ch) == 0:
-        if left:
-            sys.stderr.write("Error: Unexpected end of file.\n")
-            exit(1)
-        break
+
+def addchar(ch):
+    global left, stack, isInQuote, isTransformed, skip_tag, left, program
     if not left:
         if ch == "{":
             left = True
             stack = 1
         else:
             if skip_tag != "":
-                continue
+                return
             sys.stdout.write(ch)
             sys.stdout.flush()
     else:
@@ -436,12 +423,37 @@ while True:
             stack = []
             answer = parse_program(program, 0)
             if answer[2] != skip_tag and skip_tag != "":
-                continue
+                return
             exec(''.join(answer[0]))
-            print(answer[1])
             result = eval(answer[1])
             if result is None:
                 result = ''
             sys.stdout.write(str(result))
             sys.stdout.flush()
             program = ""
+
+
+def parsefile(file):
+    while True:
+        ch = file.read(1)
+        if len(ch) == 0:
+            if left:
+                sys.stderr.write("Error: Unexpected end of file.\n")
+                exit(1)
+            break
+        addchar(ch)
+
+
+def run(args=None):
+    Parser = argparse.ArgumentParser(prog="natsulang", description="Natsu Language version " + version + " by Natsu Kinmoe")
+    Parser.add_argument("-s", "--stream", help="execute a program inputted in stream, [file] will be ignored", action='store_true', default=False)
+    Parser.add_argument("file", help="The file that will be executed.", nargs="?", default="")
+    Args = Parser.parse_args(args)
+    if Args.file == "" and not Args.stream:
+        Parser.print_help()
+        exit()
+    file = sys.stdin if Args.stream else open(Args.file, "r")
+    parsefile(file)
+
+if __name__ == "__main__":
+	run()
