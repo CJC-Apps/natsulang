@@ -13,7 +13,7 @@ def throw_error(err, exc=1):
 if int(sys.version.split('.')[0]) < 3:
     throw_error("Unable to run natsulang in python version less than 3.0.0. Please upgrade your python to the newest version.", 2)
 
-version = "1.0.0.b2"
+version = "1.0.0.b3"
 
 imports = dict(default="""import = eval("__import__");
 int = eval("int");str = eval("str");float = eval("float");
@@ -115,18 +115,21 @@ def parse_single(prog, begin, tg="") -> list:
         cur = res[3] + 1
         while cur < len(prog) and (prog[cur] == ' ' or prog[cur] == '\n' or prog[cur] == '\t'):
             cur += 1
-        if cur >= len(prog) or prog[cur] != '(':
-            throw_error("In program tag " + tag + " position " + str(cur) + ": Bracket expected.\n")
-        res2 = parse_program(prog, cur + 1, tg)
-        for i in range(len(res2[0])):
-            res2[0][i] = '\t' + res2[0][i]
-        preprog += res2[0]
-        preprog.append('\t' + res2[1])
+        if cur < len(prog) and prog[cur] != ';':
+            if cur >= len(prog) or prog[cur] != '(':
+                throw_error("In program tag " + tag + " position " + str(cur) + ": Bracket expected.\n")
+            res2 = parse_program(prog, cur + 1, tg)
+            for i in range(len(res2[0])):
+                res2[0][i] = '\t' + res2[0][i]
+            preprog += res2[0]
+            preprog.append('\t' + res2[1])
+            cur = res2[3] + 1
+        elif cur < len(prog) and prog[cur] == ';':
+            cur += 1
         res = list(res[0])
         for i in range(len(res)):
             res[i] = '\t' + res[i]
         preprog += res
-        cur = res2[3] + 1
         while cur < len(prog) and (prog[cur] == ' ' or prog[cur] == '\n' or prog[cur] == '\t'):
             cur += 1
         mainprog = "None\n"
