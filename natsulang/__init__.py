@@ -13,7 +13,7 @@ def throw_error(err, exc=1):
 if int(sys.version.split('.')[0]) < 3:
     throw_error("Unable to run natsulang in python version less than 3.0.0. Please upgrade your python to the newest version.", 2)
 
-version = "1.0.0.0"
+version = "1.0.0.b2"
 
 imports = dict(default="""import = eval("__import__");
 int = eval("int");str = eval("str");float = eval("float");
@@ -46,9 +46,11 @@ format = eval("format");True = eval("True");False = eval("False");
 global_var = {}
 values = []
 program = ""
+if_count = 0
 
 
 def parse_single(prog, begin, tg="") -> list:
+    global if_count
     cur = begin
     tag = tg
     mainprog = ""
@@ -203,7 +205,9 @@ def parse_single(prog, begin, tg="") -> list:
             throw_error("In program tag " + tag + " position " + str(cur) + ": Bracket expected.\n")
         res = parse_program(prog, cur + 1, tg)
         preprog += res[0]
-        preprog.append('if_result = None\n')
+        ifres = 'if_result_' + str(if_count)
+        if_count += 1
+        preprog.append(ifres + ' = None\n')
         preprog.append('if (' + res[1][:-1] + '):\n')
         cur = res[3] + 1
         while cur < len(prog) and (prog[cur] == ' ' or prog[cur] == '\n' or prog[cur] == '\t'):
@@ -214,7 +218,7 @@ def parse_single(prog, begin, tg="") -> list:
         for i in range(len(res[0])):
             res[0][i] = '\t' + res[0][i]
         preprog += res[0]
-        preprog.append('\tif_result = ' + res[1])
+        preprog.append('\t' + ifres + ' = ' + res[1])
         cur = res[3] + 1
         while cur < len(prog) and (prog[cur] == ' ' or prog[cur] == '\n' or prog[cur] == '\t'):
             cur += 1
@@ -224,11 +228,11 @@ def parse_single(prog, begin, tg="") -> list:
                 res[0][i] = '\t' + res[0][i]
             preprog.append("else:\n")
             preprog += res[0]
-            preprog.append('\tif_result = ' + res[1])
+            preprog.append('\t' + ifres + ' = ' + res[1])
             cur = res[3] + 1
             while cur < len(prog) and (prog[cur] == ' ' or prog[cur] == '\n' or prog[cur] == '\t'):
                 cur += 1
-        mainprog = "if_result\n"
+        mainprog = ifres + '\n'
         return [preprog, mainprog, cur]
     last_name = False
     in_func = 0

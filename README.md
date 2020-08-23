@@ -3,18 +3,18 @@ This is a small text processing language based on Python 3. It is now being used
 ![](NatsulangImage.jpg)
 
 ## Example
-Recently, a Chinese book called <å¹³å®‰ç»> is hot on the Internet. All sentences in this book is in the format of `**å¹³å®‰`. The most famous paragraph translated in English is like this:
+Recently, a Chinese book called <Æ½°²¾­> is hot on the Internet. All sentences in this book is in the format of `**Æ½°²`. The most famous paragraph translated in English is like this:
 ```
 Born safe. One month safe. 100 days safe. 1 year old safe. 2 years old safe. 3 years old safe. 4 years old safe. 5 years
 old safe. 6 years old safe. 7 years old safe. 8 years old safe. 9 years old safe. 10 years old safe...
 ```
 In chinese, the paragraph is:
 ```
-åˆç”Ÿå¹³å®‰ï¼Œæ»¡æœˆå¹³å®‰ï¼Œç™¾å¤©å¹³å®‰ï¼Œ1å²å¹³å®‰ï¼Œ2å²å¹³å®‰ï¼Œ3å²å¹³å®‰ï¼Œ4å²å¹³å®‰ï¼Œ5å²å¹³å®‰ï¼Œ6å²å¹³å®‰ï¼Œ7å²å¹³å®‰ï¼Œ8å²å¹³å®‰ï¼Œ9å²å¹³å®‰ï¼Œ10å²å¹³å®‰...
+³õÉúÆ½°²£¬ÂúÔÂÆ½°²£¬°ÙÌìÆ½°²£¬1ËêÆ½°²£¬2ËêÆ½°²£¬3ËêÆ½°²£¬4ËêÆ½°²£¬5ËêÆ½°²£¬6ËêÆ½°²£¬7ËêÆ½°²£¬8ËêÆ½°²£¬9ËêÆ½°²£¬10ËêÆ½°²...
 ```
 This paragraph is so tidy, that it can be generated with programs. Using natsulang, you can generate this paragraph like below:
 ```
-åˆç”Ÿå¹³å®‰ï¼Œæ»¡æœˆå¹³å®‰ï¼Œç™¾å¤©å¹³å®‰{s="";for(i:range(1,121))(s+="ï¼Œ"+str(i)+"å²å¹³å®‰");s}ã€‚
+³õÉúÆ½°²£¬ÂúÔÂÆ½°²£¬°ÙÌìÆ½°²{s="";for(i:range(1,121))(s+="£¬"+str(i)+"ËêÆ½°²");s}¡£
 ```
 Maybe you are headache with your math proofs. This is not a problem in Natsulang. Just use the following program:
 ```
@@ -43,6 +43,8 @@ First, you need to download Python 3 and install. If you're using Windows, you n
 Then, type `pip install natsulang` in the terminal, and wait for it complete.
 
 Finally, type `natsulang` in the terminal. If no error occurs, the installation is success.
+
+If you need to upgrade natsulang, please use `pip install --upgrade natsulang`.
 
 ## Learn
 You can learn Natsulang [here](https://github.com/CJC-Apps/natsulang/wiki).
