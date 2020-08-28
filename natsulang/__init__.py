@@ -13,7 +13,7 @@ def throw_error(err, exc=1):
 if int(sys.version.split('.')[0]) < 3:
     throw_error("Unable to run natsulang in python version less than 3.0.0. Please upgrade your python to the newest version.", 2)
 
-version = "1.0.0.b3"
+version = "1.0.0.b4"
 
 imports = dict(default="""import = eval("__import__");
 int = eval("int");str = eval("str");float = eval("float");
@@ -56,6 +56,7 @@ def parse_single(prog, begin, tg="") -> list:
     mainprog = ""
     preprog = []
     split = []
+    glob = []
     if prog[cur: cur + 3] == "for" and not prog[cur + 3].isalnum() and prog[cur + 3] != "_":
         cur += 3
         while cur < len(prog) and (prog[cur] == ' ' or prog[cur] == '\n' or prog[cur] == '\t'):
@@ -84,6 +85,7 @@ def parse_single(prog, begin, tg="") -> list:
         preprog += expr[0]
         preprog.append("for natsulang_" + var + " in " + expr[1][:-1] + ":\n")
         cur = expr[3]
+        glob = expr[4]
         while cur < len(prog) and (prog[cur] == ' ' or prog[cur] == '\n' or prog[cur] == '\t'):
             cur += 1
         if cur == len(prog) or prog[cur] != ')':
@@ -102,7 +104,8 @@ def parse_single(prog, begin, tg="") -> list:
         cur = res[3] + 1
         while cur < len(prog) and (prog[cur] == ' ' or prog[cur] == '\n' or prog[cur] == '\t'):
             cur += 1
-        return [preprog, mainprog, cur]
+        glob += res[4]
+        return [preprog, mainprog, cur, glob]
     if prog[cur: cur + 5] == "while" and not prog[cur + 5].isalnum() and prog[cur + 5] != "_":
         cur += 5
         while cur < len(prog) and (prog[cur] == ' ' or prog[cur] == '\n' or prog[cur] == '\t'):
@@ -113,6 +116,7 @@ def parse_single(prog, begin, tg="") -> list:
         preprog += res[0]
         preprog.append('while (' + res[1][:-1] + '):\n')
         cur = res[3] + 1
+        glob = res[4]
         while cur < len(prog) and (prog[cur] == ' ' or prog[cur] == '\n' or prog[cur] == '\t'):
             cur += 1
         if cur < len(prog) and prog[cur] != ';':
@@ -124,6 +128,7 @@ def parse_single(prog, begin, tg="") -> list:
             preprog += res2[0]
             preprog.append('\t' + res2[1])
             cur = res2[3] + 1
+            glob += res2[4]
         elif cur < len(prog) and prog[cur] == ';':
             cur += 1
         res = list(res[0])
@@ -133,7 +138,7 @@ def parse_single(prog, begin, tg="") -> list:
         while cur < len(prog) and (prog[cur] == ' ' or prog[cur] == '\n' or prog[cur] == '\t'):
             cur += 1
         mainprog = "None\n"
-        return [preprog, mainprog, cur]
+        return [preprog, mainprog, cur, glob]
     if prog[cur: cur + 4] == "func" and not prog[cur + 4].isalnum() and prog[cur + 4] != "_":
         cur += 4
         while cur < len(prog) and (prog[cur] == ' ' or prog[cur] == '\n' or prog[cur] == '\t'):
@@ -199,7 +204,8 @@ def parse_single(prog, begin, tg="") -> list:
         if cur == len(prog):
             throw_error("In program tag " + tag + " position " + str(cur) + ": Bracket expected.\n")
         mainprog = "None\n"
-        return [preprog, mainprog, cur]
+        glob = ["natsulang_" + var]
+        return [preprog, mainprog, cur, glob]
     if prog[cur: cur + 2] == "if" and not prog[cur + 2].isalnum() and prog[cur + 2] != "_":
         cur += 2
         while cur < len(prog) and (prog[cur] == ' ' or prog[cur] == '\n' or prog[cur] == '\t'):
@@ -213,6 +219,7 @@ def parse_single(prog, begin, tg="") -> list:
         preprog.append(ifres + ' = None\n')
         preprog.append('if (' + res[1][:-1] + '):\n')
         cur = res[3] + 1
+        glob = res[4]
         while cur < len(prog) and (prog[cur] == ' ' or prog[cur] == '\n' or prog[cur] == '\t'):
             cur += 1
         if cur >= len(prog) or prog[cur] != '(':
@@ -223,6 +230,7 @@ def parse_single(prog, begin, tg="") -> list:
         preprog += res[0]
         preprog.append('\t' + ifres + ' = ' + res[1])
         cur = res[3] + 1
+        glob += res[4]
         while cur < len(prog) and (prog[cur] == ' ' or prog[cur] == '\n' or prog[cur] == '\t'):
             cur += 1
         if cur < len(prog) and prog[cur] == '(':
@@ -233,10 +241,11 @@ def parse_single(prog, begin, tg="") -> list:
             preprog += res[0]
             preprog.append('\t' + ifres + ' = ' + res[1])
             cur = res[3] + 1
+            glob += res[4]
             while cur < len(prog) and (prog[cur] == ' ' or prog[cur] == '\n' or prog[cur] == '\t'):
                 cur += 1
         mainprog = ifres + '\n'
-        return [preprog, mainprog, cur]
+        return [preprog, mainprog, cur, glob]
     last_name = False
     in_func = 0
     func_pos = 0
@@ -252,6 +261,7 @@ def parse_single(prog, begin, tg="") -> list:
                 cur += 1
             if (not len(mainprog) or mainprog[-1] != '.') and name != "eval" and name != "break" and name != "continue" and name != "return" and not name[0].isdigit():
                 mainprog += "natsulang_" + name
+                glob.append("natsulang_" + name)
             else:
                 if name == "break" or name == "continue":
                     preprog.append(name + "\n")
@@ -317,7 +327,7 @@ def parse_single(prog, begin, tg="") -> list:
     if mainprog == "":
         mainprog = "None"
     mainprog += '\n'
-    return [preprog, mainprog, cur]
+    return [preprog, mainprog, cur, glob]
 
 
 def parse_program(prog, begin, tg="") -> list:
@@ -326,6 +336,7 @@ def parse_program(prog, begin, tg="") -> list:
     tagged = False
     mainprog = ""
     preprog = []
+    glob = []
     while cur < len(prog) and prog[cur] != ')':
         while cur < len(prog) and (prog[cur] == ' ' or prog[cur] == '\n' or prog[cur] == '\t'):
             cur += 1
@@ -351,7 +362,9 @@ def parse_program(prog, begin, tg="") -> list:
             cur += 1
             if imports[name] is None:
                 throw_error("In program tag " + tag + " position " + str(position) + ": No libs with name '" + name + "'\n")
-            preprog += parse_program(imports[name], 0)[0]
+            result = parse_program(imports[name], 0)
+            preprog += result[0]
+            glob += result[4]
         elif cur == len(prog) or prog[cur] == ';' or prog[cur] == ")":
             continue
         else:
@@ -359,6 +372,7 @@ def parse_program(prog, begin, tg="") -> list:
             preprog += res[0]
             preprog.append(res[1])
             cur = res[2]
+            glob += res[3]
         while cur < len(prog) and (prog[cur] == ' ' or prog[cur] == '\n' or prog[cur] == '\t'):
             cur += 1
         if cur < len(prog) and prog[cur] != ';' and prog[cur] != ')':
@@ -388,7 +402,7 @@ def parse_program(prog, begin, tg="") -> list:
                 is_equal -= 1
         preprog.append(mainprog)
         mainprog = mainprog[0: is_equal - 1] + "\n"
-    return [preprog, mainprog, tag, cur]
+    return [preprog, mainprog, tag, cur, glob]
 
 
 answer = parse_program("@default@;", 0)
@@ -431,7 +445,8 @@ def addchar(ch):
             answer = parse_program(program, 0)
             if answer[2] != skip_tag and skip_tag != "":
                 return
-            exec(''.join(answer[0]))
+            glob = answer[4]
+            exec('global ' + ','.join(list(set(glob))) + '\n' + ''.join(answer[0]))
             result = eval(answer[1])
             if result is None:
                 result = ''
