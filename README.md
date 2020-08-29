@@ -1,6 +1,6 @@
 # Natsulang text processing language
 This is a small text processing language based on Python 3. It is now being used in a software called CJCMCG.
-![](NatsulangImage.jpg)
+![](https://github.com/CJC-Apps/natsulang/blob/master/NatsulangImage.jpg?raw=true)
 
 ## Example
 Recently, a Chinese book called <平安经> is hot on the Internet. All sentences in this book is in the format of `**平安`. The most famous paragraph translated in English is like this:
@@ -8,7 +8,7 @@ Recently, a Chinese book called <平安经> is hot on the Internet. All sentences i
 Born safe. One month safe. 100 days safe. 1 year old safe. 2 years old safe. 3 years old safe. 4 years old safe. 5 years
 old safe. 6 years old safe. 7 years old safe. 8 years old safe. 9 years old safe. 10 years old safe...
 ```
-In chinese, the paragraph is:
+In Chinese, the paragraph is:
 ```
 初生平安，满月平安，百天平安，1岁平安，2岁平安，3岁平安，4岁平安，5岁平安，6岁平安，7岁平安，8岁平安，9岁平安，10岁平安...
 ```

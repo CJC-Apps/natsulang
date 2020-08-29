@@ -13,7 +13,7 @@ def throw_error(err, exc=1):
 if int(sys.version.split('.')[0]) < 3:
     throw_error("Unable to run natsulang in python version less than 3.0.0. Please upgrade your python to the newest version.", 2)
 
-version = "1.0.0.b4"
+version = "1.0.0.b5"
 
 imports = dict(default="""import = eval("__import__");
 int = eval("int");str = eval("str");float = eval("float");
@@ -446,7 +446,10 @@ def addchar(ch):
             if answer[2] != skip_tag and skip_tag != "":
                 return
             glob = answer[4]
-            exec('global ' + ','.join(list(set(glob))) + '\n' + ''.join(answer[0]))
+            if len(glob):
+                exec('global ' + ','.join(list(set(glob))) + '\n' + ''.join(answer[0]))
+            else:
+                exec(''.join(answer[0]))
             result = eval(answer[1])
             if result is None:
                 result = ''
