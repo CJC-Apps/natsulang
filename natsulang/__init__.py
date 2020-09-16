@@ -13,7 +13,7 @@ def throw_error(err, exc=1):
 if int(sys.version.split('.')[0]) < 3:
 	throw_error("Unable to run natsulang in python version less than 3.0.0. Please upgrade your python to the newest version.", 2)
 
-version = "1.0.0.b6"
+version = "1.0.0.b7"
 
 imports = dict(default="""import = eval("__import__");
 int = eval("int");str = eval("str");float = eval("float");
@@ -47,6 +47,13 @@ global_var = {}
 values = []
 program = ""
 if_count = 0
+
+
+class JiangPu(Exception):
+	def __init__(self, value):
+		self.value = value
+	def __str__(self):
+		return repr(self.value)
 
 
 def parse_single(prog, begin, tg="") -> list:
@@ -245,6 +252,21 @@ def parse_single(prog, begin, tg="") -> list:
 			while cur < len(prog) and (prog[cur] == ' ' or prog[cur] == '\n' or prog[cur] == '\t'):
 				cur += 1
 		mainprog = ifres + '\n'
+		return [preprog, mainprog, cur, glob]
+	if prog[cur: cur + 4] == "jump" and not prog[cur + 4].isalnum() and prog[cur + 4] != "_":
+		cur += 4
+		while cur < len(prog) and (prog[cur] == ' ' or prog[cur] == '\n' or prog[cur] == '\t'):
+			cur += 1
+		if cur == len(prog) or prog[cur] != '(':
+			throw_error("In program tag " + tag + " position " + str(cur) + ": Bracket expected.\n")
+		res = parse_program(prog, cur + 1, tg)
+		preprog += res[0]
+		preprog.append("raise JiangPu(" + res[1][:-1] + ")\n")
+		mainprog = "None\n"
+		cur = res[3] + 1
+		glob = res[4]
+		while cur < len(prog) and (prog[cur] == ' ' or prog[cur] == '\n' or prog[cur] == '\t'):
+			cur += 1
 		return [preprog, mainprog, cur, glob]
 	last_name = False
 	in_func = 0
@@ -453,19 +475,27 @@ def addchar(ch):
 			stack = []
 			answer = parse_program(program, 0)
 			if answer[2] != skip_tag and skip_tag != "":
+				program = ""
 				return
+			skip_tag = ""
 			glob = answer[4]
-			if len(glob):
-				exec('global ' + ','.join(list(set(glob))) + '\n' + ''.join(answer[0]))
-			else:
-				exec(''.join(answer[0]))
-			result = eval(answer[1])
-			if result is None:
-				result = ''
-			if type(result) == bytes:
-				result = result.decode('utf-8')
-			sys.stdout.write(str(result))
-			sys.stdout.flush()
+			try:
+				if len(glob):
+					exec('global ' + ','.join(list(set(glob))) + '\n' + ''.join(answer[0]))
+				else:
+					exec(''.join(answer[0]))
+				result = eval(answer[1])
+				if result is None:
+					result = ''
+				if type(result) == bytes:
+					result = result.decode('utf-8')
+				sys.stdout.write(str(result))
+				sys.stdout.flush()
+			except JiangPu as e:
+				if not e.value:
+					skip_tag = "exit"
+				else:
+					skip_tag = ":" + str(e.value)
 			program = ""
 
 

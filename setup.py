@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="natsulang",
-    version="1.0.0.b6",
+    version="1.0.0.b7",
     author="CJC Apps",
     author_email="jrgdcharlieyan@gmail.com",
     description="A text-processing language based on Python 3.",

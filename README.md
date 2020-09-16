@@ -1,5 +1,8 @@
 # Natsulang text processing language
 This is a small text processing language based on Python 3. It is now being used in a software called CJCMCG.
+
+[![Issues](https://img.shields.io/github/issues/CJC-Apps/natsulang)](https://github.com/CJC-Apps/natsulang/issues) [![Stars](https://img.shields.io/github/stars/CJC-Apps/natsulang)](https://github.com/CJC-Apps/natsulang) [![](https://img.shields.io/github/license/CJC-Apps/natsulang)](https://github.com/CJC-Apps/natsulang/blob/master/LICENSE)
+
 ![](https://github.com/CJC-Apps/natsulang/blob/master/NatsulangImage.jpg?raw=true)
 
 ## Example
