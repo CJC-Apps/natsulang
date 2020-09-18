@@ -13,40 +13,97 @@ def throw_error(err, exc=1):
 if int(sys.version.split('.')[0]) < 3:
 	throw_error("Unable to run natsulang in python version less than 3.0.0. Please upgrade your python to the newest version.", 2)
 
-version = "1.0.0.b8"
+version = "1.0.0.b9"
 
-imports = dict(default="""import = eval("__import__");
-int = eval("int");str = eval("str");float = eval("float");
-bool = eval("bool");list = eval("list");bytes = eval("bytes");
-set = eval("set");dict = eval("dict");
-map = eval("map");range = eval("range");
-None = eval("None");input = eval("input");
-print = eval("print");len = eval("len");
-exit = eval("exit");abs = eval("abs");
-all = eval("all");any = eval("any");
-bin = eval("bin");bytearray = eval("bytearray");
-callable = eval("callable");chr = eval("chr");
-compile = eval("compile");complex = eval("complex");
-divmod = eval("divmod");enumerate = eval("enumerate");
-filter = eval("filter");
-frozenset = eval("frozenset");hash = eval("hash");
-hex = eval("hex");id = eval("id");
-isinstance = eval("isinstance");iter = eval("iter");
-max = eval("max");memoryview = eval("memoryview");
-min = eval("min");next = eval("next");
-object = eval("object");oct = eval("oct");
-open = eval("open");ord = eval("ord");
-repr = eval("repr");zip = eval("zip");
-round = eval("round");slice = eval("slice");
-sorted = eval("sorted");sum = eval("sum");
-tuple = eval("tuple");type = eval("type");
-format = eval("format");True = eval("True");False = eval("False");
-""")
+
+def importlib(name):
+	if name == "default":
+		return """import = eval("__import__");
+		int = eval("int");str = eval("str");float = eval("float");
+		bool = eval("bool");list = eval("list");bytes = eval("bytes");
+		set = eval("set");dict = eval("dict");
+		map = eval("map");range = eval("range");
+		None = eval("None");input = eval("input");
+		print = eval("print");len = eval("len");
+		exit = eval("exit");abs = eval("abs");
+		all = eval("all");any = eval("any");
+		bin = eval("bin");bytearray = eval("bytearray");
+		callable = eval("callable");chr = eval("chr");
+		compile = eval("compile");complex = eval("complex");
+		divmod = eval("divmod");enumerate = eval("enumerate");
+		filter = eval("filter");
+		frozenset = eval("frozenset");hash = eval("hash");
+		hex = eval("hex");id = eval("id");
+		isinstance = eval("isinstance");iter = eval("iter");
+		max = eval("max");memoryview = eval("memoryview");
+		min = eval("min");next = eval("next");
+		object = eval("object");oct = eval("oct");
+		open = eval("open");ord = eval("ord");
+		repr = eval("repr");zip = eval("zip");
+		round = eval("round");slice = eval("slice");
+		sorted = eval("sorted");sum = eval("sum");
+		tuple = eval("tuple");type = eval("type");
+		format = eval("format");True = eval("True");False = eval("False");
+		flush = eval("output_buff_flush");
+		"""
+	elif name == "math":
+		return """math = import("math");
+		acos = math.acos; acosh = math.acosh;
+		asin = math.asin; asinh = math.asinh;
+		atan = math.atan; atan2 = math.atan2;
+		atanh = math.atanh; ceil = math.ceil;
+		comb = math.comb; copysign = math.copysign;
+		cos = math.cos; cosh = math.cosh;
+		degrees = math.degrees; dist = math.dist;
+		e = math.e; erf = math.erf;
+		erfc = math.erfc; exp = math.exp;
+		expm1 = math.expm1; fabs = math.fabs;
+		factorial = math.factorial; floor = math.floor;
+		fmod = math.fmod; frexp = math.frexp;
+		fsum = math.fsum; gamma = math.gamma;
+		gcd = math.gcd; hypot = math.hypot;
+		inf = math.inf; isclose = math.isclose;
+		isfinite = math.isfinite; isinf = math.isinf;
+		isnan = math.isnan; isqrt = math.isqrt;
+		ldexp = math.ldexp; lgamma = math.lgamma;
+		log = math.log; log10 = math.log10;
+		log1p = math.log1p; log2 = math.log2;
+		modf = math.modf; nan = math.nan;
+		perm = math.perm; pi = math.pi;
+		pow = math.pow; prod = math.prod;
+		radians = math.radians; remainder = math.remainder;
+		sin = math.sin; sinh = math.sinh;
+		sqrt = math.sqrt; tan = math.tan;
+		tanh = math.tanh; tau = math.tau;
+		trunc = math.trunc;
+		"""
+	elif name == "cmath":
+		return """cmath = import("cmath");
+		acos = cmath.acos; acosh = cmath.acosh;
+		asin = cmath.asin; asinh = cmath.asinh;
+		atan = cmath.atan; atanh = cmath.atanh;
+		cos = cmath.cos; cosh = cmath.cosh;
+		e = cmath.e; exp = cmath.exp;
+		inf = cmath.inf; infj = cmath.infj;
+		isclose = cmath.isclose; isfinite = cmath.isfinite;
+		isinf = cmath.isinf; isnan = cmath.isnan;
+		log = cmath.log; log10 = cmath.log10;
+		nan = cmath.nan; nanj = cmath.nanj;
+		phase = cmath.phase; pi = cmath.pi;
+		polar = cmath.polar; rect = cmath.rect;
+		sin = cmath.sin; sinh = cmath.sinh;
+		sqrt = cmath.sqrt; tan = cmath.tan;
+		tanh = cmath.tanh; tau = cmath.tau;
+		"""
+	else:
+		return None
+
 
 global_var = {}
 values = []
 program = ""
 if_count = 0
+output_buff = ""
 
 
 class JiangPu(Exception):
@@ -54,6 +111,13 @@ class JiangPu(Exception):
 		self.value = value
 	def __str__(self):
 		return repr(self.value)
+
+
+def output_buff_flush():
+	global output_buff
+	sys.stdout.write(output_buff)
+	sys.stdout.flush()
+	output_buff = ""
 
 
 def parse_single(prog, begin, tg="") -> list:
@@ -385,10 +449,12 @@ def parse_program(prog, begin, tg="") -> list:
 			if cur == len(prog):
 				throw_error("In program tag " + tag + " position " + str(cur) + ": Another '@' expected\n")
 			cur += 1
-			if imports[name] is None:
+			lib = importlib(name)
+			if lib is None:
 				throw_error("In program tag " + tag + " position " + str(position) + ": No libs with name '" + name + "'\n")
-			result = parse_program(imports[name], 0)
+			result = parse_program(lib, 0)
 			preprog += result[0]
+			preprog.append("None\n")
 			glob += result[4]
 		elif cur == len(prog) or prog[cur] == ';' or prog[cur] == ")":
 			continue
@@ -448,7 +514,7 @@ skip_tag = ""
 
 
 def addchar(ch):
-	global left, stack, isInQuote, isTransformed, skip_tag, left, program
+	global left, stack, isInQuote, isTransformed, skip_tag, left, program, output_buff
 	if not left:
 		if ch == "{":
 			left = True
@@ -456,8 +522,11 @@ def addchar(ch):
 		else:
 			if skip_tag != "":
 				return
-			sys.stdout.write(ch)
-			sys.stdout.flush()
+			output_buff += ch
+			if len(output_buff) >= 262144 or ch == '\n' or ch == '\0':
+				sys.stdout.write(output_buff)
+				sys.stdout.flush()
+				output_buff = ""
 	else:
 		if ch != "}" or isInQuote or stack > 1:
 			program += ch
@@ -492,10 +561,12 @@ def addchar(ch):
 					result = ''
 				if type(result) == bytes:
 					result = result.decode('utf-8')
+				sys.stdout.write(output_buff)
 				sys.stdout.write(str(result))
 				sys.stdout.flush()
+				output_buff = ""
 			except JiangPu as e:
-				if not e.value:
+				if e.value is None:
 					skip_tag = "exit"
 				else:
 					skip_tag = ":" + str(e.value)
@@ -509,6 +580,8 @@ def parsefile(file):
 			if left:
 				sys.stderr.write("Error: Unexpected end of file.\n")
 				exit(1)
+			sys.stdout.write(output_buff)
+			sys.stdout.flush()
 			break
 		addchar(ch)
 
