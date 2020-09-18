@@ -13,7 +13,7 @@ def throw_error(err, exc=1):
 if int(sys.version.split('.')[0]) < 3:
 	throw_error("Unable to run natsulang in python version less than 3.0.0. Please upgrade your python to the newest version.", 2)
 
-version = "1.0.0.b7"
+version = "1.0.0.b8"
 
 imports = dict(default="""import = eval("__import__");
 int = eval("int");str = eval("str");float = eval("float");
@@ -276,7 +276,7 @@ def parse_single(prog, begin, tg="") -> list:
 			cur += 1
 		if cur == len(prog):
 			break
-		if prog[cur].isalnum() or prog[cur] == '_':
+		if (prog[cur].isalnum() or prog[cur] == '_') and not (cur + 1 < len(prog) and prog[cur + 1] in "'\""):
 			name = ""
 			while cur < len(prog) and (prog[cur].isalnum() or prog[cur] == '_'):
 				name += prog[cur]
@@ -318,7 +318,10 @@ def parse_single(prog, begin, tg="") -> list:
 				mainprog = mainprog[:-1] + " or "
 			elif prog[cur] == '!' and (cur == len(prog) or prog[cur + 1] != '='):
 				mainprog = mainprog + " not "
-			elif prog[cur] == '"' or prog[cur] == "'":
+			elif prog[cur] == '"' or prog[cur] == "'" or prog[cur].isalnum():
+				if prog[cur].isalnum():
+					mainprog += prog[cur]
+					cur += 1
 				quote_type = prog[cur]
 				mainprog += prog[cur]
 				cur += 1
@@ -513,12 +516,44 @@ def parsefile(file):
 def run(args=None):
 	Parser = argparse.ArgumentParser(prog="natsulang", description="Natsu Language version " + version + " by Natsu Kinmoe")
 	Parser.add_argument("-s", "--stream", help="execute a program inputted in stream, [file] will be ignored", action='store_true', default=False)
-	Parser.add_argument("file", help="The file that will be executed.", nargs="?", default="")
+	Parser.add_argument("-v", "--version", help="show the version of this program and exit", action='store_true', default=False)
+	Parser.add_argument("--check-updates", help="check if your natsulang is up to date", action='store_true', default=False)
+	Parser.add_argument("--ignore-header", help="ignore the first line of the program", action='store_true', default=False)
+	Parser.add_argument("file", help="the file that will be executed", nargs="?", default="")
 	Args = Parser.parse_args(args)
+	if Args.version:
+		print(version)
+		exit()
+	if Args.check_updates:
+		from xmlrpc.client import ServerProxy
+		from functools import reduce
+		print("Checking for updates ...")
+		pypi = ServerProxy("https://pypi.python.org/pypi")
+		possible_package_names = ["natsulang", "Natsulang"]
+		available = reduce(lambda a, b: a if a is not None else b, map(pypi.package_releases, possible_package_names))
+		Version = ""
+		for i in range(len(version)):
+			if i < len(version) and version[i] == '.' and version[i + 1].isalpha():
+				continue
+			Version += version[i]
+		if available[0] != Version:
+			print("Updates found. You are using version", Version)
+			print("but the newest version is", available[0])
+			print("You can upgrade natsulang via the")
+			print("'pip install --upgrade natsulang' command.")
+		else:
+			print("Your natsulang is up to date.")
+		exit()
 	if Args.file == "" and not Args.stream:
 		Parser.print_help()
 		exit()
 	file = sys.stdin if Args.stream else open(Args.file, "r")
+	if Args.ignore_header:
+		ch = ''
+		while ch != '\n':
+			ch = file.read(1)
+			if len(ch) == 0:
+				exit(0)
 	parsefile(file)
 
 if __name__ == "__main__":
