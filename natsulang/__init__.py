@@ -13,7 +13,7 @@ def throw_error(err, exc=1):
 if int(sys.version.split('.')[0]) < 3:
 	throw_error("Unable to run natsulang in python version less than 3.0.0. Please upgrade your python to the newest version.", 2)
 
-version = "1.0.0.b9"
+version = "1.0.0.b10"
 
 
 def importlib(name):
@@ -106,7 +106,7 @@ if_count = 0
 output_buff = ""
 
 
-class JiangPu(Exception):
+class JiangPuException(Exception):
 	def __init__(self, value):
 		self.value = value
 	def __str__(self):
@@ -325,7 +325,7 @@ def parse_single(prog, begin, tg="") -> list:
 			throw_error("In program tag " + tag + " position " + str(cur) + ": Bracket expected.\n")
 		res = parse_program(prog, cur + 1, tg)
 		preprog += res[0]
-		preprog.append("raise JiangPu(" + res[1][:-1] + ")\n")
+		preprog.append("raise JiangPuException(" + res[1][:-1] + ")\n")
 		mainprog = "None\n"
 		cur = res[3] + 1
 		glob = res[4]
@@ -543,6 +543,9 @@ def addchar(ch):
 			if ch == '{' and not isInQuote:
 				stack += 1
 		else:
+			sys.stdout.write(output_buff)
+			sys.stdout.flush()
+			output_buff = ""
 			left = False
 			stack = []
 			answer = parse_program(program, 0)
@@ -561,15 +564,16 @@ def addchar(ch):
 					result = ''
 				if type(result) == bytes:
 					result = result.decode('utf-8')
-				sys.stdout.write(output_buff)
 				sys.stdout.write(str(result))
 				sys.stdout.flush()
-				output_buff = ""
-			except JiangPu as e:
+			except JiangPuException as e:
 				if e.value is None:
 					skip_tag = "exit"
 				else:
 					skip_tag = ":" + str(e.value)
+			except Exception as e:
+				sys.stderr.write("Exception occured in program tag " + answer[2] + "\n")
+				raise
 			program = ""
 
 
