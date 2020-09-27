@@ -13,7 +13,7 @@ def throw_error(err, exc=1):
 if int(sys.version.split('.')[0]) < 3:
 	throw_error("Unable to run natsulang in python version less than 3.0.0. Please upgrade your python to the newest version.", 2)
 
-version = "1.0.0.b10"
+version = "1.0.0.b11"
 
 
 def importlib(name):
@@ -315,6 +315,17 @@ def parse_single(prog, begin, tg="") -> list:
 			glob += res[4]
 			while cur < len(prog) and (prog[cur] == ' ' or prog[cur] == '\n' or prog[cur] == '\t'):
 				cur += 1
+		elif cur < len(prog) and prog[cur] != ';':
+			res = parse_single(prog, cur, tg)
+			for i in range(len(res[0])):
+				res[0][i] = '\t' + res[0][i]
+			preprog.append("else:\n")
+			preprog += res[0]
+			preprog.append('\t' + ifres + ' = ' + res[1])
+			cur = res[2]
+			glob += res[3]
+			while cur < len(prog) and (prog[cur] == ' ' or prog[cur] == '\n' or prog[cur] == '\t'):
+				cur += 1
 		mainprog = ifres + '\n'
 		return [preprog, mainprog, cur, glob]
 	if prog[cur: cur + 4] == "jump" and not prog[cur + 4].isalnum() and prog[cur + 4] != "_":
@@ -466,14 +477,15 @@ def parse_program(prog, begin, tg="") -> list:
 			glob += res[3]
 		while cur < len(prog) and (prog[cur] == ' ' or prog[cur] == '\n' or prog[cur] == '\t'):
 			cur += 1
-		if cur < len(prog) and prog[cur] != ';' and prog[cur] != ')':
-			throw_error("In program tag " + tag + " position " + str(cur) + ": ';' expected.\n")
 		if cur < len(prog) and prog[cur] == ';':
 			cur += 1
 			while cur < len(prog) and (prog[cur] == ' ' or prog[cur] == '\n' or prog[cur] == '\t'):
 				cur += 1
 			if cur == len(prog) or prog[cur] == ')':
 				preprog.append("None\n")
+		else:
+			while cur < len(prog) and (prog[cur] == ' ' or prog[cur] == '\n' or prog[cur] == '\t'):
+				cur += 1
 		while cur < len(prog) and (prog[cur] == ' ' or prog[cur] == '\n' or prog[cur] == '\t'):
 			cur += 1
 	if not len(preprog):
@@ -568,7 +580,7 @@ def addchar(ch):
 				sys.stdout.flush()
 			except JiangPuException as e:
 				if e.value is None:
-					skip_tag = "exit"
+					exit(0)
 				else:
 					skip_tag = ":" + str(e.value)
 			except Exception as e:
@@ -605,19 +617,26 @@ def run(args=None):
 		from xmlrpc.client import ServerProxy
 		from functools import reduce
 		print("Checking for updates ...")
-		pypi = ServerProxy("https://pypi.python.org/pypi")
-		possible_package_names = ["natsulang", "Natsulang"]
-		available = reduce(lambda a, b: a if a is not None else b, map(pypi.package_releases, possible_package_names))
+		try:
+			pypi = ServerProxy("https://pypi.python.org/pypi")
+			possible_package_names = ["natsulang", "Natsulang"]
+			available = reduce(lambda a, b: a if a is not None else b, map(pypi.package_releases, possible_package_names))
+		except:
+			throw_error("Check failed! Please make sure your Internet connection is not broken!")
 		Version = ""
 		for i in range(len(version)):
 			if i < len(version) and version[i] == '.' and version[i + 1].isalpha():
 				continue
 			Version += version[i]
 		if available[0] != Version:
+			import platform
 			print("Updates found. You are using version", Version)
 			print("but the newest version is", available[0])
 			print("You can upgrade natsulang via the")
-			print("'pip install --upgrade natsulang' command.")
+			if platform.system() == "Windows":
+				print("'pip install --upgrade natsulang' command.")
+			else:
+				print("'python3 -m pip install --upgrade natsulang' command.")
 		else:
 			print("Your natsulang is up to date.")
 		exit()
